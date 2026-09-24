@@ -24,6 +24,7 @@ MUSD · BTC · BorrowerOperations (+ signature ops) · TroveManager · PriceFeed
 contracts/   Foundry: the full Ledger protocol (see contracts/README.md)
 apps/api/    Hono backend: auth, invoice storage, chain reads, gasless-acceptance relayer, splits
 apps/keeper/ Permissionless automation: overdue/default sweep, guardian + paydown sweep
+indexer/     Ponder: event indexer / read model for invoices, advances, payments (see indexer/README.md)
 docs/        System design and submission kit
 ```
 
@@ -40,7 +41,11 @@ docs/        System design and submission kit
 - **Contracts:** 13 Solidity contracts, **70/70 tests passing** (unit + fuzz), compiled for Mezo's
   London EVM target, with a broadcastable deploy script (`contracts/script/Deploy.s.sol`).
 - **Backend:** `apps/api` and `apps/keeper` both built and type-check clean.
-- **Not yet built:** the frontend (`apps/web`), the indexer, and Wave-2 items (Base payment intake,
-  Telegram bot) — see the build plan in [`docs/SYSTEM_DESIGN.md` §19](docs/SYSTEM_DESIGN.md#19-build-plan-wave-1--wave-2-day-by-day).
+- **Indexer:** `indexer/` (Ponder) is built and its schema/config/handlers passed `ponder codegen`'s
+  validation once, but a full clean run couldn't be confirmed in this dev environment (Node v24 vs.
+  Ponder's HTTP client — see `indexer/README.md`'s "Verification status" for the honest details and
+  what to check before relying on it).
+- **Not yet built:** the frontend (`apps/web`) and Wave-2 items (Base payment intake, Telegram bot) —
+  see the build plan in [`docs/SYSTEM_DESIGN.md` §19](docs/SYSTEM_DESIGN.md#19-build-plan-wave-1--wave-2-day-by-day).
 - **Not yet deployed anywhere** — no testnet addresses exist yet. A handful of Mezo-side details need
   confirming first; see [`docs/SYSTEM_DESIGN.md` §22](docs/SYSTEM_DESIGN.md#22-open-questions-to-resolve-on-day-1).

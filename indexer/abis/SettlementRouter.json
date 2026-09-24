@@ -1,0 +1,25 @@
+[
+  {
+    "type": "event",
+    "name": "InvoicePaid",
+    "inputs": [
+      { "name": "invoiceId", "type": "uint256", "indexed": true },
+      { "name": "from", "type": "address", "indexed": true },
+      { "name": "inBTC", "type": "bool", "indexed": false },
+      { "name": "btcAmount", "type": "uint256", "indexed": false },
+      { "name": "credited", "type": "uint256", "indexed": false },
+      { "name": "toVaults", "type": "uint256", "indexed": false },
+      { "name": "remainder", "type": "uint256", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "KeptBTC",
+    "inputs": [
+      { "name": "invoiceId", "type": "uint256", "indexed": true },
+      { "name": "account", "type": "address", "indexed": true },
+      { "name": "btcAmount", "type": "uint256", "indexed": false },
+      { "name": "musdMinted", "type": "uint256", "indexed": false }
+    ]
+  }
+]

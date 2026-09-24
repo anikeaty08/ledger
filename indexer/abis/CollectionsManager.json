@@ -1,0 +1,19 @@
+[
+  {
+    "type": "event",
+    "name": "Defaulted",
+    "inputs": [
+      { "name": "invoiceId", "type": "uint256", "indexed": true },
+      { "name": "payer", "type": "address", "indexed": true },
+      { "name": "owed", "type": "uint256", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "DisputeResolved",
+    "inputs": [
+      { "name": "invoiceId", "type": "uint256", "indexed": true },
+      { "name": "payerAtFault", "type": "bool", "indexed": false }
+    ]
+  }
+]

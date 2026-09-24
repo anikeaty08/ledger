@@ -1,0 +1,10 @@
+[
+  {
+    "type": "event",
+    "name": "AccountCreated",
+    "inputs": [
+      { "name": "user", "type": "address", "indexed": true },
+      { "name": "account", "type": "address", "indexed": false }
+    ]
+  }
+]

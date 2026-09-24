@@ -1,0 +1,55 @@
+[
+  {
+    "type": "event",
+    "name": "InvoiceCreated",
+    "inputs": [
+      { "name": "id", "type": "uint256", "indexed": true },
+      { "name": "issuer", "type": "address", "indexed": true },
+      { "name": "payer", "type": "address", "indexed": true },
+      { "name": "amount", "type": "uint256", "indexed": false },
+      { "name": "dueDate", "type": "uint64", "indexed": false },
+      { "name": "commitment", "type": "bytes32", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "InvoiceCancelled",
+    "inputs": [{ "name": "id", "type": "uint256", "indexed": true }]
+  },
+  {
+    "type": "event",
+    "name": "InvoiceAccepted",
+    "inputs": [
+      { "name": "id", "type": "uint256", "indexed": true },
+      { "name": "payer", "type": "address", "indexed": true }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "InvoiceStatusChanged",
+    "inputs": [
+      { "name": "id", "type": "uint256", "indexed": true },
+      { "name": "from", "type": "uint8", "indexed": false },
+      { "name": "to", "type": "uint8", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "PaymentRecorded",
+    "inputs": [
+      { "name": "id", "type": "uint256", "indexed": true },
+      { "name": "credited", "type": "uint256", "indexed": false },
+      { "name": "totalPaid", "type": "uint256", "indexed": false },
+      { "name": "fullyPaid", "type": "bool", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "DisputeOpened",
+    "inputs": [
+      { "name": "id", "type": "uint256", "indexed": true },
+      { "name": "by", "type": "address", "indexed": true },
+      { "name": "reasonHash", "type": "bytes32", "indexed": false }
+    ]
+  }
+]

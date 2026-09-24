@@ -1,0 +1,58 @@
+[
+  {
+    "type": "event",
+    "name": "AdvanceFunded",
+    "inputs": [
+      { "name": "invoiceId", "type": "uint256", "indexed": true },
+      { "name": "borrower", "type": "address", "indexed": true },
+      { "name": "payer", "type": "address", "indexed": true },
+      { "name": "principal", "type": "uint256", "indexed": false },
+      { "name": "fee", "type": "uint256", "indexed": false },
+      { "name": "recourseMUSD", "type": "uint256", "indexed": false },
+      { "name": "recourseBTC", "type": "uint256", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "PaymentApplied",
+    "inputs": [
+      { "name": "invoiceId", "type": "uint256", "indexed": true },
+      { "name": "principalPaid", "type": "uint256", "indexed": false },
+      { "name": "feePaid", "type": "uint256", "indexed": false },
+      { "name": "leftover", "type": "uint256", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "AdvanceClosed",
+    "inputs": [{ "name": "invoiceId", "type": "uint256", "indexed": true }]
+  },
+  {
+    "type": "event",
+    "name": "AdvanceDefaulted",
+    "inputs": [
+      { "name": "invoiceId", "type": "uint256", "indexed": true },
+      { "name": "recovered", "type": "uint256", "indexed": false },
+      { "name": "seniorLoss", "type": "uint256", "indexed": false },
+      { "name": "juniorLoss", "type": "uint256", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "RecoveryApplied",
+    "inputs": [
+      { "name": "invoiceId", "type": "uint256", "indexed": true },
+      { "name": "toSenior", "type": "uint256", "indexed": false },
+      { "name": "toJunior", "type": "uint256", "indexed": false },
+      { "name": "leftover", "type": "uint256", "indexed": false }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "CircuitBreakerTripped",
+    "inputs": [
+      { "name": "funded", "type": "uint256", "indexed": false },
+      { "name": "defaulted", "type": "uint256", "indexed": false }
+    ]
+  }
+]
