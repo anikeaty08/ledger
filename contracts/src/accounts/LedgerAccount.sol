@@ -76,6 +76,7 @@ contract LedgerAccount is Initializable, ReentrancyGuard {
     error BadConfig();
     error UnsafeICR(uint256 icr);
     error NothingToDo();
+    error BadPrice();
 
     constructor() {
         _disableInitializers();
@@ -221,7 +222,7 @@ contract LedgerAccount is Initializable, ReentrancyGuard {
         if (!g.enabled || !_troveActive()) revert NothingToDo();
         _rollDay();
 
-        uint256 price = factory.priceFeed().fetchPrice();
+        uint256 price = _safePrice();
         ITroveManager tm = factory.troveManager();
         uint256 icr = tm.getCurrentICR(address(this), price);
         bool acted;
@@ -271,7 +272,16 @@ contract LedgerAccount is Initializable, ReentrancyGuard {
     // ───────────────────────────── Views ─────────────────────────────
 
     function currentICR() public view returns (uint256) {
-        return factory.troveManager().getCurrentICR(address(this), factory.priceFeed().fetchPrice());
+        return factory.troveManager().getCurrentICR(address(this), _safePrice());
+    }
+
+    /// @dev Mirrors BTCSwapper's zero-price guard so a broken/uninitialized oracle fails loudly here
+    ///      too, instead of silently producing icr == 0 (which happens to fail safe on every caller —
+    ///      `borrowAgainstBTC` reverts via UnsafeICR, and `guardianCheck`'s critical-branch division by
+    ///      `price` reverts on its own — but an explicit, named revert is clearer than a bare panic).
+    function _safePrice() internal view returns (uint256 price) {
+        price = factory.priceFeed().fetchPrice();
+        if (price == 0) revert BadPrice();
     }
 
     function position() external view returns (uint256 coll, uint256 debt, uint256 icr, bool active) {

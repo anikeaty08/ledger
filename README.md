@@ -18,11 +18,29 @@ Built for the Mezo Buildathon (Track 2: Access & Distribution · Track 1: DeFi).
 
 MUSD · BTC · BorrowerOperations (+ signature ops) · TroveManager · PriceFeed · Router / Pools · MUSD Savings Rate · Wormhole NTT (Base, Wave 2)
 
+## Repo layout
+
+```
+contracts/   Foundry: the full Ledger protocol (see contracts/README.md)
+apps/api/    Hono backend: auth, invoice storage, chain reads, gasless-acceptance relayer, splits
+apps/keeper/ Permissionless automation: overdue/default sweep, guardian + paydown sweep
+docs/        System design and submission kit
+```
+
 ## Docs
 
 - [System design](docs/SYSTEM_DESIGN.md): architecture, contracts, lifecycle, credit model, tranches, security, testing, build plan
 - [Submission kit](docs/SUBMISSION_KIT.md): rubric mapping, form answers, deck, video script, business model, GTM
+- [Contracts README](contracts/README.md): setup, testing, deploying
 
 ## Status
 
-🚧 Design phase. The Wave 1 build starts Oct 16, 2026 on Mezo testnet (chain ID 31611).
+🏗️ **Backend built and tested ahead of Wave 1** (which opens Oct 16, 2026 on Mezo testnet, chain ID 31611):
+
+- **Contracts:** 13 Solidity contracts, **70/70 tests passing** (unit + fuzz), compiled for Mezo's
+  London EVM target, with a broadcastable deploy script (`contracts/script/Deploy.s.sol`).
+- **Backend:** `apps/api` and `apps/keeper` both built and type-check clean.
+- **Not yet built:** the frontend (`apps/web`), the indexer, and Wave-2 items (Base payment intake,
+  Telegram bot) — see the build plan in [`docs/SYSTEM_DESIGN.md` §19](docs/SYSTEM_DESIGN.md#19-build-plan-wave-1--wave-2-day-by-day).
+- **Not yet deployed anywhere** — no testnet addresses exist yet. A handful of Mezo-side details need
+  confirming first; see [`docs/SYSTEM_DESIGN.md` §22](docs/SYSTEM_DESIGN.md#22-open-questions-to-resolve-on-day-1).
