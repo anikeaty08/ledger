@@ -18,3 +18,8 @@ dist/
 out/
 cache/
 broadcast/
+
+# TypeScript builds
+dist/
+apps/*/dist/
+services/*/dist/

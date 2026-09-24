@@ -1,0 +1,22 @@
+{
+  "name": "@ledger/keeper",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Permissionless-shaped automation: overdue/default transitions, LedgerAccount guardian checks and debt paydown, and invoice_cache reconciliation. Anyone can run this against the deployed contracts — it holds no user funds and calls only public, permissionless functions.",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "once": "tsx src/index.ts --once"
+  },
+  "dependencies": {
+    "viem": "^2.21.55",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "tsx": "^4.19.2",
+    "@types/node": "^22.10.2"
+  }
+}
