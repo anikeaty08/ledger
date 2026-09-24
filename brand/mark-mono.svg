@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Same tick, transparent background, currentColor stroke — for placing on either paper or ink. -->
+  <path d="M16 34 L27 45 L49 19" stroke="currentColor" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+</svg>

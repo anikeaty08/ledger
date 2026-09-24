@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-plex-sans: "IBM Plex Sans", "Public Sans", "Segoe UI", Arial, sans-serif;
+  --font-plex-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  background-color: #edf2ea;
+  color: #221f1a;
+}
+
+/* Tabular figures everywhere a number appears — the functional reason for the mono face: columns of
+   dollar amounts must align, the way a real ledger's ruled columns do. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* A single ruled line — the base structural unit, used instead of card shadows/borders throughout. */
+.ledger-rule {
+  border-bottom: 1.5px solid #a8b5a0;
+}
+
+/* The double-rule "closing" mark from the logo — used to mark a Settled invoice. */
+.ledger-close {
+  border-bottom: 1.5px solid #a8b5a0;
+  padding-bottom: 3px;
+  box-shadow: 0 4px 0 -1.5px #a8b5a0;
+}
+
+/* Visible keyboard focus, not the default browser outline, but never removed. */
+:focus-visible {
+  outline: 2px solid #8b2e23;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

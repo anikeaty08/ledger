@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Ledger mark: an accountant's reconciliation tick — the stroke a bookkeeper makes beside a
+       balanced line item. Asymmetric on purpose (short stroke in, long stroke out), not a
+       symmetric Unicode checkmark. This is the product's one recurring, ownable shape. -->
+  <rect width="64" height="64" rx="8" fill="#EDF2EA"/>
+  <path d="M16 34 L27 45 L49 19" stroke="#8B2E23" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+</svg>
