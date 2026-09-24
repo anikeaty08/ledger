@@ -467,6 +467,13 @@ contract AdvanceEngine is IAdvanceEngine, Ownable2Step, Pausable, ReentrancyGuar
         if (jLoss > 0) junior.onLoss(jLoss);
         if (left > 0) musd.safeTransfer(a.borrower, left); // over-collateralized recourse returns
 
+        // If recourse alone fully covered the loss, there's nothing left to recover later — release
+        // the receivable now instead of leaving it stranded in this contract with no future call that
+        // would ever move it (applyRecovery only runs while recoveryDue() > 0).
+        if (sLoss == 0 && jLoss == 0) {
+            receivables.transferFrom(address(this), a.borrower, invoiceId);
+        }
+
         emit AdvanceDefaulted(invoiceId, recovered, sLoss, jLoss);
         _checkCircuitBreaker();
     }
@@ -495,6 +502,13 @@ contract AdvanceEngine is IAdvanceEngine, Ownable2Step, Pausable, ReentrancyGuar
         }
         if (left > 0) musd.safeTransfer(router, left);
         toVaults = toS + toJ;
+
+        // The loss is now fully recovered — release the receivable rather than leave it stranded
+        // (see the matching comment in onDefault for why this can't just wait for a later call).
+        if (a.seniorLoss == 0 && a.juniorLoss == 0) {
+            receivables.transferFrom(address(this), a.borrower, invoiceId);
+        }
+
         emit RecoveryApplied(invoiceId, toS, toJ, left);
     }
 

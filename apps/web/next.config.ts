@@ -25,6 +25,10 @@ const nextConfig: NextConfig = {
       // provider uses; not installing it is normal (it's meant for a Node backend, not a browser
       // bundle) but webpack still warns about the unresolved dynamic require.
       "pino-pretty": false,
+      // @metamask/sdk (pulled in by @wagmi/connectors' MetaMask connector) optionally supports React
+      // Native, behind an import of @react-native-async-storage/async-storage — irrelevant and not
+      // installed in a web-only app, same class of noise as the two aliases above.
+      "@react-native-async-storage/async-storage": false,
     };
     return config;
   },
