@@ -9,6 +9,7 @@
     "start": "node dist/index.js",
     "test": "vitest run",
     "smoke": "tsx scripts/smoke.ts",
+    "payment": "tsx scripts/payment.ts",
     "db:up": "docker compose up -d",
     "lint": "tsc -p tsconfig.json --noEmit"
   },
