@@ -59,7 +59,7 @@ contract SettlementRouter is Ownable2Step, ReentrancyGuard {
     );
     event KeptBTC(uint256 indexed invoiceId, address indexed account, uint256 btcAmount, uint256 musdMinted);
     event Payout(address indexed payee, address indexed destination, uint256 amount);
-    event ModulesSet(address swapper, address accountFactory);
+    event ModulesSet(address indexed swapper, address indexed accountFactory);
 
     error NotPayable(InvoiceStatus status);
     error NothingOwed();

@@ -2,46 +2,230 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light theme. Measured contrast on --c-bg: text 17.6, muted 4.9, faint 4.7, accent 5.2, gold 5.0,
+   success 5.0; white on accent-strong 5.8; danger on danger-soft 4.6. */
 :root {
-  --font-plex-sans: "IBM Plex Sans", "Public Sans", "Segoe UI", Arial, sans-serif;
-  --font-plex-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  color-scheme: light;
+  --c-bg: 244 247 251;
+  --c-surface: 255 255 255;
+  --c-surface-soft: 238 243 249;
+  --c-border: 213 222 234;
+  --c-border-soft: 228 235 244;
+  --c-border-strong: 183 197 215;
+  --c-text: 7 17 31;
+  --c-muted: 94 109 128;
+  --c-faint: 100 112 128;
+  --c-accent: 0 99 214;
+  --c-accent-strong: 0 82 255;
+  --c-accent-soft: 230 240 255;
+  --c-danger: 199 53 53;
+  --c-danger-soft: 253 236 236;
+  --c-gold: 154 91 18;
+  --c-gold-soft: 253 243 225;
+  --c-success: 8 122 85;
+  --shadow: 0 22px 70px rgba(26, 48, 78, 0.1);
+  --grid-line: 213 222 234;
+  --glow: 8 124 255;
 }
 
+/* Dark theme (default). Measured contrast on --c-bg: text 19.4, muted 7.1, faint 4.8, accent 7.1;
+   white on accent-strong 4.8; danger on danger-soft 6.3. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --c-bg: 0 5 11;
+  --c-surface: 5 11 18;
+  --c-surface-soft: 9 17 27;
+  --c-border: 23 37 54;
+  --c-border-soft: 14 25 38;
+  --c-border-strong: 43 64 88;
+  --c-text: 245 249 255;
+  --c-muted: 139 154 173;
+  --c-faint: 107 124 144;
+  --c-accent: 45 156 255;
+  --c-accent-strong: 10 108 240;
+  --c-accent-soft: 10 26 46;
+  --c-danger: 255 104 104;
+  --c-danger-soft: 42 15 20;
+  --c-gold: 246 185 74;
+  --c-gold-soft: 42 31 12;
+  --c-success: 59 214 160;
+  --shadow: 0 24px 90px rgba(0, 0, 0, 0.42);
+  --grid-line: 23 37 54;
+  --glow: 45 156 255;
+}
+
+html {
+  background: rgb(var(--c-bg));
+}
 body {
-  background-color: #edf2ea;
-  color: #221f1a;
+  background: rgb(var(--c-bg));
+  color: rgb(var(--c-text));
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+::selection {
+  background: rgb(var(--c-accent-strong));
+  color: #fff;
 }
 
-/* Tabular figures everywhere a number appears — the functional reason for the mono face: columns of
-   dollar amounts must align, the way a real ledger's ruled columns do. */
+/* Hero backdrop: faint grid plus two soft blue light sources. */
+.site-grid {
+  background-image: linear-gradient(rgb(var(--grid-line)) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--grid-line)) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.site-glow {
+  background: radial-gradient(circle at 70% 30%, rgb(var(--glow) / 0.12), transparent 34%),
+    radial-gradient(circle at 20% 90%, rgb(var(--glow) / 0.06), transparent 28%);
+}
+
+.panel {
+  background: rgb(var(--c-surface) / 0.94);
+  border: 1px solid rgb(var(--c-border));
+  box-shadow: var(--shadow);
+}
+
+/* Small monospace section label. */
+.kicker {
+  color: rgb(var(--c-accent));
+  font: 650 0.7rem/1 var(--font-mono), monospace;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 .tabular {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
 
-/* A single ruled line — the base structural unit, used instead of card shadows/borders throughout. */
-.ledger-rule {
-  border-bottom: 1.5px solid #a8b5a0;
-}
-
-/* The double-rule "closing" mark from the logo — used to mark a Settled invoice. */
+/* Double rule: marks a settled line. */
 .ledger-close {
-  border-bottom: 1.5px solid #a8b5a0;
+  border-bottom: 1px solid rgb(var(--c-border));
   padding-bottom: 3px;
-  box-shadow: 0 4px 0 -1.5px #a8b5a0;
+  box-shadow: 0 4px 0 -3px rgb(var(--c-border-strong));
 }
 
-/* Visible keyboard focus, not the default browser outline, but never removed. */
 :focus-visible {
-  outline: 2px solid #8b2e23;
+  outline: 2px solid rgb(var(--c-accent));
   outline-offset: 2px;
 }
 
+@keyframes ledger-draw {
+  from {
+    stroke-dashoffset: 52;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.ledger-mark-path {
+  /* 52 ≈ the path length of the tick in brand/mark.svg, so the draw-in ends exactly at the tip. */
+  stroke-dasharray: 52;
+  stroke-dashoffset: 52;
+  animation: ledger-draw 0.7s 0.15s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+}
+
+.btn {
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease, color 150ms ease,
+    border-color 150ms ease, box-shadow 150ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+.rise {
+  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.rise-delay {
+  animation: rise 0.7s 0.12s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.pulse-soft {
+  animation: pulse-soft 2.4s ease-in-out infinite;
+}
+
+.ledger-skeleton {
+  background-color: rgb(var(--c-border));
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ledger-skeleton {
+    animation: ledger-pulse 1.4s ease-in-out infinite;
+  }
+}
+@keyframes ledger-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.ledger-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  /* 24px hit area (WCAG 2.2 target size); the visible track is a 2px line through the middle. */
+  height: 24px;
+  background: linear-gradient(rgb(var(--c-border-strong)), rgb(var(--c-border-strong))) center / 100% 2px no-repeat;
+  cursor: pointer;
+}
+.ledger-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgb(var(--c-accent-strong));
+  box-shadow: 0 0 0 4px rgb(var(--c-accent) / 0.2);
+  cursor: pointer;
+}
+.ledger-slider::-moz-range-track {
+  background: transparent;
+}
+.ledger-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: rgb(var(--c-accent-strong));
+  box-shadow: 0 0 0 4px rgb(var(--c-accent) / 0.2);
+  cursor: pointer;
+}
+
+/* Reduced motion keeps opacity fades (they aid comprehension) and drops movement. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .btn:hover:not(:disabled),
+  .btn:active:not(:disabled) {
+    transform: none;
   }
 }

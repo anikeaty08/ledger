@@ -104,8 +104,10 @@ contract AdvanceEngine is IAdvanceEngine, Ownable2Step, Pausable, ReentrancyGuar
     event AdvanceDefaulted(uint256 indexed invoiceId, uint256 recovered, uint256 seniorLoss, uint256 juniorLoss);
     event RecoveryApplied(uint256 indexed invoiceId, uint256 toSenior, uint256 toJunior, uint256 leftover);
     event CircuitBreakerTripped(uint256 funded, uint256 defaulted);
-    event ModulesSet(address router, address collections, address policy, address swapper, address treasury);
-    event ProtocolFeesWithdrawn(address to, uint256 amount);
+    event ModulesSet(
+        address indexed router, address indexed collections, address policy, address swapper, address treasury
+    );
+    event ProtocolFeesWithdrawn(address indexed to, uint256 amount);
 
     error NotRouter();
     error NotCollections();

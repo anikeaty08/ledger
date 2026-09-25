@@ -4,6 +4,7 @@ pragma solidity 0.8.24;
 import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {IReputationRegistry} from "../interfaces/ILedger.sol";
 
 /// @title ReputationRegistry
 /// @notice Portable, on-chain payment reputation for clients (payers) and freelancers (issuers).
@@ -15,7 +16,7 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 ///         - volumeFactor:   log10(total MUSD paid) / 5, saturates at 100k MUSD (0..1000)
 ///         - diversityFactor: distinct issuers paid × 250, saturates at 4    (0..1000)
 ///         Diversity weighting makes wash-trading with a single self-controlled issuer ineffective.
-contract ReputationRegistry is Ownable2Step {
+contract ReputationRegistry is Ownable2Step, IReputationRegistry {
     struct PayerStats {
         uint32 settled;
         uint32 onTime;

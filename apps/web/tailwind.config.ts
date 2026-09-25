@@ -1,42 +1,33 @@
 import type { Config } from "tailwindcss";
 
-// Design tokens from the Ledger visual system: ruled ledger paper, not glass or gradient cards.
-// See docs/SYSTEM_DESIGN.md §17 and the design-plan conversation for the reasoning behind each token.
+// Every color is a CSS variable (RGB channels) set per theme in globals.css, so opacity modifiers like
+// `bg-paper/75` keep working and the light/dark toggle is one attribute on <html>.
+const v = (name: string) => `rgb(var(--c-${name}) / <alpha-value>)`;
+
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        paper: {
-          DEFAULT: "#EDF2EA", // traditional ledger-paper green, desaturated
-          dim: "#E2E9DE",
-        },
-        ink: {
-          DEFAULT: "#221F1A", // warm near-black, like iron-gall ink
-          soft: "#5B5A54",
-        },
-        rule: {
-          DEFAULT: "#A8B5A0", // structural line color — quiet, not decorative
-          soft: "#D3DBCE",
-        },
-        red: {
-          DEFAULT: "#8B2E23", // oxblood — "in the red": overdue/defaulted states, the one accent
-          soft: "#F3E4E1",
-        },
-        gold: {
-          DEFAULT: "#B8763E", // muted antique gold — BTC-denominated amounts only
-          soft: "#F1E6D8",
-        },
+        paper: { DEFAULT: v("bg"), dim: v("surface"), raised: v("surface-soft") },
+        ink: { DEFAULT: v("text"), soft: v("muted"), faint: v("faint") },
+        rule: { DEFAULT: v("border"), soft: v("border-soft"), strong: v("border-strong") },
+        accent: { DEFAULT: v("accent"), strong: v("accent-strong"), soft: v("accent-soft") },
+        red: { DEFAULT: v("danger"), soft: v("danger-soft") },
+        gold: { DEFAULT: v("gold"), soft: v("gold-soft") },
+        ok: { DEFAULT: v("success") },
       },
       fontFamily: {
-        sans: ["var(--font-plex-sans)", "Public Sans", "Segoe UI", "Arial", "sans-serif"],
-        mono: ["var(--font-plex-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+        sans: ["var(--font-sans)", "Inter", "Segoe UI", "Arial", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       borderRadius: {
-        DEFAULT: "6px", // buttons and interactive controls only — data rows stay square
+        DEFAULT: "9px",
+        lg: "16px",
       },
       maxWidth: {
         prose: "72ch",
+        site: "92rem",
       },
     },
   },

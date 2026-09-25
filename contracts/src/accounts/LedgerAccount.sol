@@ -60,7 +60,7 @@ contract LedgerAccount is Initializable, ReentrancyGuard {
     uint256 public btcAddedToday;
 
     event Initialized(address indexed owner);
-    event TreasuryConfigured(address yieldVault, bool autoSweep, uint16 paydownBps);
+    event TreasuryConfigured(address indexed yieldVault, bool autoSweep, uint16 paydownBps);
     event GuardianConfigured(GuardianConfig cfg);
     event BorrowedAgainstBTC(uint256 btcIn, uint256 musdMinted);
     event Income(uint256 amount, uint256 reserved, uint256 swept);

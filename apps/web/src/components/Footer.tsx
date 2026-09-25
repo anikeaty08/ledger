@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogoMark } from "./Logo";
+import { Icon } from "./Icon";
 
 const COLUMNS: { heading: string; links: { label: string; href: string; external?: boolean }[] }[] = [
   {
@@ -43,48 +44,53 @@ const COLUMNS: { heading: string; links: { label: string; href: string; external
 export function Footer() {
   return (
     <footer className="border-t border-rule bg-paper-dim">
-      <div className="mx-auto max-w-6xl px-6 py-16">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr_1fr]">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <LogoMark size={26} />
-              <span className="font-sans text-[19px] font-semibold text-ink">Ledger</span>
-            </div>
-            <p className="mt-4 max-w-[32ch] text-[14px] leading-relaxed text-ink-soft">
-              A Bitcoin-backed business account for freelancers. Get paid on your own schedule, not
-              your client&apos;s.
-            </p>
-          </div>
-
-          {COLUMNS.map((col) => (
-            <div key={col.heading}>
-              <h4 className="text-[13px] font-medium text-ink">{col.heading}</h4>
-              <ul className="mt-4 space-y-2.5">
-                {col.links.map((link) => (
-                  <li key={link.label}>
-                    {link.external ? (
-                      <a
-                        href={link.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[14px] text-ink-soft transition-colors hover:text-ink"
-                      >
-                        {link.label}
-                      </a>
-                    ) : (
-                      <Link href={link.href} className="text-[14px] text-ink-soft transition-colors hover:text-ink">
-                        {link.label}
-                      </Link>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+      <div className="mx-auto grid max-w-site gap-12 px-5 py-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] lg:px-8">
+        <div>
+          <Link href="/" className="inline-flex items-center gap-3" aria-label="Ledger home">
+            <LogoMark size={30} />
+            <span className="text-[17px] font-bold tracking-[-0.035em] text-ink">Ledger</span>
+          </Link>
+          <p className="mt-5 max-w-sm text-[14px] leading-6 text-ink-soft">
+            A Bitcoin-backed business account for freelancers. Get paid on your own schedule, not your
+            client&apos;s.
+          </p>
+          <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-rule bg-paper px-3 py-1.5 text-[12px] text-ink-soft">
+            <span className="pulse-soft h-2 w-2 rounded-full bg-ok" aria-hidden="true" />
+            Live on Mezo testnet
+          </p>
         </div>
 
-        <div className="mt-14 flex flex-col gap-3 border-t border-rule-soft pt-6 text-[13px] text-ink-soft sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} Ledger. Non-custodial. Bitcoin-backed, on Mezo.</span>
+        {COLUMNS.map((col) => (
+          <div key={col.heading}>
+            <h2 className="kicker">{col.heading}</h2>
+            <ul className="mt-5 space-y-3">
+              {col.links.map((link) => (
+                <li key={link.label}>
+                  {link.external ? (
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[14px] text-ink-soft transition-colors hover:text-ink"
+                    >
+                      {link.label}
+                      <Icon name="external-link" size={16} />
+                      <span className="sr-only">(opens in a new tab)</span>
+                    </a>
+                  ) : (
+                    <Link href={link.href} className="text-[14px] text-ink-soft transition-colors hover:text-ink">
+                      {link.label}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <div className="border-t border-rule">
+        <div className="mx-auto flex max-w-site flex-col gap-2 px-5 py-6 text-[12px] text-ink-faint sm:flex-row sm:justify-between lg:px-8">
+          <span>© {new Date().getFullYear()} Ledger. Non-custodial, Bitcoin-backed, on Mezo.</span>
           <span>Every contract is open source and verifiable on-chain.</span>
         </div>
       </div>

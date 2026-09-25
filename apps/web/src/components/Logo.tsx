@@ -1,17 +1,31 @@
-/** The Ledger mark: an accountant's reconciliation tick — the stroke made beside a balanced line
- *  item. Asymmetric on purpose (short stroke in, long stroke out), not a symmetric checkmark glyph.
- *  See brand/mark.svg and brand/logo.svg at the repo root for the source files. */
-export function LogoMark({ size = 28, className = "" }: { size?: number; className?: string }) {
+/** The Ledger mark: an accountant's reconciliation tick, asymmetric on purpose (short stroke in, long
+ *  stroke out). Source files live in brand/ at the repo root. */
+export function LogoMark({
+  size = 28,
+  className = "",
+  animated = false,
+}: {
+  size?: number;
+  className?: string;
+  animated?: boolean;
+}) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" className={className} aria-hidden="true">
-      <rect width="64" height="64" rx="8" fill="#EDF2EA" />
+      <defs>
+        <linearGradient id="ledger-mark-bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#2F86FF" />
+          <stop offset="1" stopColor="#1554C0" />
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="14" fill="url(#ledger-mark-bg)" />
       <path
-        d="M16 34 L27 45 L49 19"
-        stroke="#8B2E23"
-        strokeWidth="6"
-        strokeLinecap="square"
-        strokeLinejoin="miter"
+        d="M17 34 L28 45 L48 20"
+        stroke="#FFFFFF"
+        strokeWidth="6.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         fill="none"
+        className={animated ? "ledger-mark-path" : undefined}
       />
     </svg>
   );
@@ -20,11 +34,8 @@ export function LogoMark({ size = 28, className = "" }: { size?: number; classNa
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
-      <LogoMark size={26} />
-      <span className="flex flex-col leading-none">
-        <span className="font-sans font-semibold text-[19px] tracking-[-0.01em] text-ink">Ledger</span>
-        <span className="ledger-close h-0 w-full" aria-hidden="true" />
-      </span>
+      <LogoMark size={28} animated />
+      <span className="text-[17px] font-semibold tracking-[-0.02em] text-ink">Ledger</span>
     </span>
   );
 }

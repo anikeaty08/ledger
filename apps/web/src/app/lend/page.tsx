@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useAccount, useReadContract, useWriteContract, usePublicClient } from "wagmi";
-import { LedgerSheet, LedgerSheetHeader, LedgerRow, Button, Input, Label } from "@/components/Ledger";
+import { LedgerSheet, LedgerSheetHeader, LedgerRow, Button, Input, Label, Notice } from "@/components/Ledger";
+import { NotDeployed } from "@/components/NotDeployed";
 import { Amount } from "@/components/Amount";
 import { requireAddress, addresses } from "@/lib/addresses";
 import { trancheVaultAbi } from "@/lib/abis/shared";
-import { formatUnits18, parseUnits18 } from "@/lib/format";
+import { formatBps, formatUnits18, parseUnits18 } from "@/lib/format";
 import type { Address } from "viem";
 
 function TrancheCard({
@@ -80,32 +81,51 @@ function TrancheCard({
       <LedgerSheetHeader>
         <span className="text-[15px] text-ink">{name}</span>
       </LedgerSheetHeader>
-      <div className="p-5">
-        <p className="mb-4 text-sm text-ink-soft">{description}</p>
-        <LedgerRow label="Total deposited">
+      <p className="border-b border-rule-soft px-5 py-4 text-sm text-ink-soft">{description}</p>
+      <LedgerRow label="Total deposited">
           <Amount value={totalAssets ?? 0n} currency="MUSD" />
         </LedgerRow>
-        <LedgerRow label="Utilization">{utilizationBps !== undefined ? `${Number(utilizationBps) / 100}%` : "—"}</LedgerRow>
+        <LedgerRow label="Lent out now">
+          <span className="tabular font-mono text-ink">
+            {utilizationBps !== undefined ? formatBps(Number(utilizationBps)) : "—"}
+          </span>
+        </LedgerRow>
         <LedgerRow label="Your shares" last>
-          <Amount value={shareBalance ?? 0n} currency="MUSD" />
+          <span className="tabular font-mono text-ink">{formatUnits18(shareBalance ?? 0n)}</span>
         </LedgerRow>
 
+      <div className="border-t border-rule px-5 pb-5 pt-4">
         {cooldown !== undefined && cooldown > 0n && (
-          <p className="mt-3 text-xs text-ink-soft">
+          <p className="mb-4 text-[13px] text-ink-soft">
             Withdrawals need a {Number(cooldown) / 86400}-day notice on this tranche.
           </p>
         )}
 
-        <div className="mt-4">
-          <Label>Deposit MUSD</Label>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleDeposit();
+          }}
+        >
+          <Label htmlFor={`deposit-${vault}`}>Deposit MUSD</Label>
           <div className="flex gap-2">
-            <Input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1,000.00" inputMode="decimal" />
-            <Button variant="primary" onClick={handleDeposit} disabled={working || !address}>
-              {working ? "…" : "Deposit"}
+            <Input
+              id={`deposit-${vault}`}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
+              placeholder="1,000.00"
+              inputMode="decimal"
+              disabled={!address}
+            />
+            <Button type="submit" variant="primary" disabled={working || !address || !amount} className="shrink-0">
+              {working ? "Depositing…" : "Deposit"}
             </Button>
           </div>
-        </div>
-        {error && <p className="mt-3 border border-red/30 bg-red-soft px-3 py-2 text-xs text-red">{error}</p>}
+          {!address && <p className="mt-2 text-[13px] text-ink-soft">Connect a wallet to deposit.</p>}
+        </form>
+        {error && (
+          <Notice className="mt-3">{`${error} Check your wallet's activity before trying again, in case the deposit went through.`}</Notice>
+        )}
       </div>
     </LedgerSheet>
   );
@@ -115,7 +135,8 @@ export default function LendPage() {
   if (!addresses.seniorVault || !addresses.juniorVault) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-16">
-        <p className="text-ink-soft">Vaults aren&apos;t deployed yet.</p>
+        <h1 className="mb-6 text-2xl font-semibold text-ink">Lend</h1>
+        <NotDeployed what="Lending pools" />
       </div>
     );
   }
@@ -124,7 +145,7 @@ export default function LendPage() {
     <div className="mx-auto max-w-4xl px-6 py-16">
       <h1 className="text-2xl font-semibold text-ink">Lend</h1>
       <p className="mt-2 text-ink-soft">
-        Fund invoice advances and earn yield from real invoices, not DeFi loops.
+        Your MUSD funds advances on client-accepted invoices. Pick how much default risk you take.
       </p>
       <div className="mt-8 grid gap-6 md:grid-cols-2">
         <TrancheCard

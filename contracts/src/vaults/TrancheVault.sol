@@ -6,6 +6,7 @@ import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {ITrancheVault} from "../interfaces/ILedger.sol";
 
 /// @title TrancheVault
 /// @notice ERC-4626 MUSD vault that funds invoice advances. Deployed twice:
@@ -15,7 +16,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 ///         Accounting:  totalAssets = idle + parked-in-sink + deployed principal − still-locked profit
 ///         Fees and recoveries unlock linearly over `profitUnlockTime` so nobody can sandwich a settlement.
 ///         Idle MUSD can be parked in an ERC-4626 "sink" (e.g. a MUSD savings vault) for a floor yield.
-contract TrancheVault is ERC4626, Ownable2Step {
+contract TrancheVault is ERC4626, Ownable2Step, ITrancheVault {
     using SafeERC20 for IERC20;
 
     address public engine;
@@ -37,9 +38,9 @@ contract TrancheVault is ERC4626, Ownable2Step {
     uint256 public withdrawWindow = 3 days;
     mapping(address => uint256) public withdrawRequestedAt;
 
-    event EngineSet(address engine);
-    event KeeperSet(address keeper);
-    event SinkSet(address sink);
+    event EngineSet(address indexed engine);
+    event KeeperSet(address indexed keeper);
+    event SinkSet(address indexed sink);
     event Funded(uint256 amount, uint256 deployed);
     event Repaid(uint256 principal, uint256 fee);
     event TrancheLoss(uint256 principalLost, uint256 totalLosses);
@@ -165,7 +166,7 @@ contract TrancheVault is ERC4626, Ownable2Step {
 
     // ───────────────────────────── ERC-4626 overrides ─────────────────────────────
 
-    function totalAssets() public view override returns (uint256) {
+    function totalAssets() public view override(ERC4626, ITrancheVault) returns (uint256) {
         uint256 gross = _idle() + _sinkAssets() + deployed;
         uint256 locked = lockedProfit();
         return gross > locked ? gross - locked : 0;

@@ -5,12 +5,13 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {IPriceFeed, IMezoRouter, IWrappedNative} from "../interfaces/IMezo.sol";
+import {IBTCSwapper} from "../interfaces/ILedger.sol";
 
 /// @title BTCSwapper
 /// @notice Values BTC with Mezo's PriceFeed and converts BTC → MUSD through Mezo Pools (tigris Router)
 ///         with oracle-bounded slippage and a router-vs-oracle deviation check.
 ///         On Mezo, native BTC and the BTC ERC-20 precompile share a balance, so `wrapNative` is false.
-contract BTCSwapper is Ownable2Step {
+contract BTCSwapper is Ownable2Step, IBTCSwapper {
     using SafeERC20 for IERC20;
 
     IPriceFeed public immutable priceFeed;

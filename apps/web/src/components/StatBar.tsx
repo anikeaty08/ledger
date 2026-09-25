@@ -3,19 +3,26 @@
 import { useReadContract } from "wagmi";
 import { addresses } from "@/lib/addresses";
 import { trancheVaultAbi } from "@/lib/abis/shared";
-import { formatUnits18 } from "@/lib/format";
+import { useCountUp } from "@/lib/useCountUp";
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, valueWei }: { label: string; valueWei: bigint }) {
+  // Whole MUSD units: safe as a JS number at any realistic vault size, and only used for display.
+  const wholeUnits = Number(valueWei / 10n ** 18n);
+  const { ref, value } = useCountUp(wholeUnits);
+
   return (
-    <div className="border-r border-rule px-8 py-6 last:border-r-0">
-      <div className="tabular font-mono text-2xl text-ink">{value}</div>
-      <div className="mt-1 text-sm text-ink-soft">{label}</div>
+    <div className="px-6 py-5">
+      <div className="text-[13px] text-ink-soft">{label}</div>
+      <div className="tabular mt-1.5 font-mono text-[26px] tracking-[-0.02em] text-ink">
+        <span ref={ref}>{value.toLocaleString("en-US")}</span>
+        <span className="ml-1.5 font-sans text-[13px] text-ink-faint">MUSD</span>
+      </div>
     </div>
   );
 }
 
-/** Reads live from the deployed vaults. Before deployment, shows the mechanism instead of a fake
- *  number — never a placeholder metric dressed up as real data. */
+/** Reads live from the deployed vaults. Before deployment, explains the mechanism instead of showing a
+ *  made-up number. */
 export function StatBar() {
   const deployed = !!addresses.seniorVault && !!addresses.juniorVault;
 
@@ -34,9 +41,9 @@ export function StatBar() {
 
   if (!deployed) {
     return (
-      <div className="border border-rule bg-paper px-8 py-6 text-sm text-ink-soft">
-        Advances are funded by a public lender pool, split into a senior tranche repaid first and a
-        junior tranche that earns more for taking first loss.
+      <div className="panel rounded-lg border border-rule px-6 py-5 text-[14px] text-ink-soft">
+        Advances are funded by a public lender pool, split into a senior tranche repaid first and a junior tranche
+        that earns more for taking first loss.
       </div>
     );
   }
@@ -44,10 +51,10 @@ export function StatBar() {
   const total = (seniorAssets ?? 0n) + (juniorAssets ?? 0n);
 
   return (
-    <div className="grid grid-cols-1 border border-rule bg-paper sm:grid-cols-3">
-      <Stat label="Available to lend" value={`${formatUnits18(total, 0)} MUSD`} />
-      <Stat label="Senior tranche" value={`${formatUnits18(seniorAssets ?? 0n, 0)} MUSD`} />
-      <Stat label="Junior tranche" value={`${formatUnits18(juniorAssets ?? 0n, 0)} MUSD`} />
+    <div className="panel grid grid-cols-1 divide-y divide-rule rounded-lg border border-rule sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+      <Stat label="Total in lender pools" valueWei={total} />
+      <Stat label="Senior tranche" valueWei={seniorAssets ?? 0n} />
+      <Stat label="Junior tranche" valueWei={juniorAssets ?? 0n} />
     </div>
   );
 }

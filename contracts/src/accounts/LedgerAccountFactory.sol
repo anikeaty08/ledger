@@ -22,7 +22,7 @@ contract LedgerAccountFactory is Ownable2Step {
     mapping(address => address) public accountOf;
 
     event AccountCreated(address indexed user, address account);
-    event RouterSet(address router);
+    event RouterSet(address indexed router);
     event MinICRSet(uint16 bps);
 
     error AlreadyExists();

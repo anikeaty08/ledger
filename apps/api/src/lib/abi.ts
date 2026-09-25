@@ -59,6 +59,13 @@ export const invoiceRegistryAbi = [
     ],
     outputs: [],
   },
+  { type: "error", name: "NotIssuer", inputs: [] },
+  { type: "error", name: "NotModule", inputs: [] },
+  { type: "error", name: "BadStatus", inputs: [{ name: "status", type: "uint8" }] },
+  { type: "error", name: "BadParams", inputs: [] },
+  { type: "error", name: "BadSignature", inputs: [] },
+  { type: "error", name: "Expired", inputs: [] },
+  { type: "error", name: "WrongPayer", inputs: [] },
 ] as const;
 
 export const advanceEngineAbi = [

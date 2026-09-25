@@ -3,7 +3,7 @@
 import { use } from "react";
 import { useReadContract } from "wagmi";
 import { isAddress } from "viem";
-import { LedgerSheet, LedgerSheetHeader, LedgerRow } from "@/components/Ledger";
+import { LedgerSheet, LedgerSheetHeader, LedgerRow, Notice } from "@/components/Ledger";
 import { NotDeployed } from "@/components/NotDeployed";
 import { addresses } from "@/lib/addresses";
 import { reputationRegistryAbi } from "@/lib/abis/shared";
@@ -39,7 +39,15 @@ export default function ReputationPage({ params }: { params: Promise<{ address: 
   });
 
   if (!valid) {
-    return <div className="mx-auto max-w-xl px-6 py-16 text-red">Not a valid address.</div>;
+    return (
+      <div className="mx-auto max-w-xl px-6 py-16">
+        <h1 className="mb-6 text-2xl font-semibold text-ink">Payment record</h1>
+        <Notice>
+          &ldquo;{address}&rdquo; isn&apos;t a wallet address. Check the link: an address starts with 0x and is 42
+          characters long.
+        </Notice>
+      </div>
+    );
   }
 
   if (!deployed) {
@@ -56,7 +64,9 @@ export default function ReputationPage({ params }: { params: Promise<{ address: 
   return (
     <div className="mx-auto max-w-xl px-6 py-16">
       <h1 className="text-2xl font-semibold text-ink">Payment record</h1>
-      <p className="mt-2 text-ink-soft">{shortAddress(address)}</p>
+      <p className="mt-2 font-mono text-sm text-ink-soft" title={address}>
+        {shortAddress(address)}
+      </p>
 
       <LedgerSheet className="mt-6">
         <LedgerSheetHeader>
@@ -71,7 +81,8 @@ export default function ReputationPage({ params }: { params: Promise<{ address: 
       </LedgerSheet>
 
       <p className="mt-6 text-sm text-ink-soft">
-        This record is public and on-chain — anyone can verify it before advancing you an invoice.
+        This record is public and on-chain. Anyone can check it before funding an advance on this client&apos;s
+        invoices.
       </p>
     </div>
   );

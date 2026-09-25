@@ -13,6 +13,8 @@ remappings = [
   "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
   "forge-std/=lib/forge-std/src/",
 ]
+# Deploy.s.sol writes deployed addresses to deployments/<chainId>.json.
+fs_permissions = [{ access = "read-write", path = "./deployments" }]
 
 [profile.default.fuzz]
 runs = 1000

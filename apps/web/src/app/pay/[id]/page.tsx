@@ -3,13 +3,16 @@
 import { use, useEffect, useState } from "react";
 import { useAccount, usePublicClient, useReadContract, useWriteContract, useSignTypedData } from "wagmi";
 import { parseAbi } from "viem";
-import { LedgerSheet, LedgerSheetHeader, LedgerRow, Button } from "@/components/Ledger";
+import { notFound } from "next/navigation";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { LedgerSheet, LedgerSheetHeader, LedgerRow, Button, Notice, SkeletonRows } from "@/components/Ledger";
+import { Icon } from "@/components/Icon";
 import { Amount } from "@/components/Amount";
 import { StatusBadge } from "@/components/StatusBadge";
 import { NotDeployed } from "@/components/NotDeployed";
 import { getInvoiceBlob, relayAcceptInvoice, ApiError } from "@/lib/api";
 import { decryptTerms, type InvoiceTerms } from "@/lib/crypto";
-import { InvoiceStatus, formatDate, daysUntil } from "@/lib/format";
+import { InvoiceStatus, formatDate, formatUnits18 } from "@/lib/format";
 import { addresses, requireAddress } from "@/lib/addresses";
 import { invoiceRegistryAbi } from "@/lib/abis/invoiceRegistry";
 import { settlementRouterAbi } from "@/lib/abis/settlementRouter";
@@ -26,7 +29,8 @@ type LoadState =
 
 export default function PayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const invoiceId = BigInt(id);
+  const validId = /^\d+$/.test(id);
+  const invoiceId = validId ? BigInt(id) : 0n;
   const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
@@ -36,7 +40,7 @@ export default function PayPage({ params }: { params: Promise<{ id: string }> })
   const [actionState, setActionState] = useState<"idle" | "working" | "done">("idle");
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const deployed = !!addresses.invoiceRegistry;
+  const deployed = validId && !!addresses.invoiceRegistry;
 
   const { data: onchainInvoice, refetch: refetchInvoice } = useReadContract({
     address: addresses.invoiceRegistry,
@@ -55,6 +59,7 @@ export default function PayPage({ params }: { params: Promise<{ id: string }> })
   });
 
   useEffect(() => {
+    if (!validId) return;
     async function load() {
       try {
         const blob = await getInvoiceBlob(invoiceId);
@@ -81,6 +86,8 @@ export default function PayPage({ params }: { params: Promise<{ id: string }> })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  if (!validId) notFound();
+
   if (!deployed) {
     return (
       <div className="mx-auto max-w-xl px-6 py-16">
@@ -89,12 +96,18 @@ export default function PayPage({ params }: { params: Promise<{ id: string }> })
     );
   }
   if (state.kind === "loading") {
-    return <div className="mx-auto max-w-xl px-6 py-16 text-ink-soft">Loading invoice…</div>;
+    return (
+      <div className="mx-auto max-w-xl px-6 py-16">
+        <h1 className="mb-6 text-2xl font-semibold text-ink">Invoice #{id}</h1>
+        <SkeletonRows rows={3} />
+      </div>
+    );
   }
   if (state.kind === "error") {
     return (
       <div className="mx-auto max-w-xl px-6 py-16">
-        <p className="border border-red/30 bg-red-soft px-4 py-3 text-red">{state.message}</p>
+        <h1 className="mb-6 text-2xl font-semibold text-ink">Invoice #{id}</h1>
+        <Notice>{state.message} Check that you opened the full link you were sent, then reload the page.</Notice>
       </div>
     );
   }
@@ -203,9 +216,14 @@ export default function PayPage({ params }: { params: Promise<{ id: string }> })
 
       <LedgerSheet>
         <LedgerSheetHeader>
-          <span className="text-[15px] text-ink-soft">
-            {state.terms?.description ?? "Encrypted — you need the original link to view details"}
-          </span>
+          {state.terms ? (
+            <span className="text-[15px] text-ink">{state.terms.description}</span>
+          ) : (
+            <span className="flex items-center gap-2 text-[15px] text-ink-soft">
+              <Icon name="lock" size={16} />
+              Description hidden. Open the full link you were sent to read it.
+            </span>
+          )}
         </LedgerSheetHeader>
         <LedgerRow label="Amount">
           <Amount value={amount} currency="MUSD" size="lg" />
@@ -219,30 +237,45 @@ export default function PayPage({ params }: { params: Promise<{ id: string }> })
       </LedgerSheet>
 
       {isSettled ? (
-        <p className="mt-6 text-ink-soft">This invoice has been paid in full. Thank you.</p>
+        <p className="ledger-close mt-6 flex items-center gap-2 text-ink">
+          <Icon name="check" size={16} />
+          Paid in full. Nothing more is owed on this invoice.
+        </p>
       ) : !isConnected ? (
-        <p className="mt-6 text-ink-soft">Connect a wallet to accept or pay this invoice.</p>
+        <div className="mt-6">
+          <p className="mb-3 text-sm text-ink-soft">Connect a wallet to accept or pay this invoice.</p>
+          <ConnectButton />
+        </div>
       ) : canAccept ? (
         <div className="mt-6">
           <p className="mb-3 text-sm text-ink-soft">
-            Accepting confirms you owe this amount. It costs no gas — you only sign a message.
+            Accepting confirms you owe this amount by the due date. It costs no gas: you only sign a message.
           </p>
           <Button variant="primary" onClick={handleAccept} disabled={actionState === "working"}>
-            {actionState === "working" ? "Confirm in wallet…" : "Accept invoice"}
+            {actionState === "working" ? "Confirm in your wallet…" : "Accept invoice"}
           </Button>
         </div>
       ) : canPay ? (
-        <div className="mt-6 flex gap-3">
-          <Button variant="primary" onClick={handlePayMUSD} disabled={actionState === "working"}>
-            {actionState === "working" ? "Processing…" : "Pay with MUSD"}
-          </Button>
-          <Button variant="secondary" disabled title="BTC payment UI coming — the contract call is wired in settlementRouterAbi.payWithBTC">
-            Pay with BTC
-          </Button>
+        <div className="mt-6">
+          <div className="flex flex-wrap gap-3">
+            <Button variant="primary" onClick={handlePayMUSD} disabled={actionState === "working"}>
+              {actionState === "working" ? "Confirm in your wallet…" : `Pay ${formatUnits18(owed)} MUSD`}
+            </Button>
+            <Button variant="secondary" disabled aria-describedby="btc-soon">
+              Pay with BTC
+            </Button>
+          </div>
+          <p id="btc-soon" className="mt-2 text-[13px] text-ink-soft">
+            Paying in BTC isn&apos;t available on this page yet. Pay in MUSD for now.
+          </p>
         </div>
+      ) : isMine && status === InvoiceStatus.Issued ? (
+        <p className="mt-6 text-sm text-ink-soft">
+          This is your own invoice. Send this link to your client so they can accept it.
+        </p>
       ) : null}
 
-      {actionError && <p className="mt-4 border border-red/30 bg-red-soft px-4 py-3 text-sm text-red">{actionError}</p>}
+      {actionError && <Notice className="mt-4">{actionError}</Notice>}
     </div>
   );
 }

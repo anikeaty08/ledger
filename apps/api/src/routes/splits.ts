@@ -3,6 +3,7 @@ import { z } from "zod";
 import { keccak256, encodeAbiParameters, type Address } from "viem";
 import { db } from "../db/pool.js";
 import { requireSession } from "../lib/session-middleware.js";
+import { ensureMerchant } from "../lib/merchants.js";
 import { AddressSchema } from "../lib/validation.js";
 
 export const splitRoutes = new Hono();
@@ -35,6 +36,7 @@ splitRoutes.post("/", async (c) => {
   if (totalBps !== 10_000) return c.json({ error: `recipients must sum to 10000 bps, got ${totalBps}` }, 400);
 
   const id = splitId(parsed.data.recipients);
+  await ensureMerchant(owner);
   await db
     .insertInto("splits")
     .values({

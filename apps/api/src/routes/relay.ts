@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { BaseError, ContractFunctionRevertedError, zeroAddress } from "viem";
 import { relayerClient, publicClient, requireAddress } from "../lib/chain.js";
 import { invoiceRegistryAbi } from "../lib/abi.js";
 import { env } from "../lib/env.js";
@@ -28,32 +29,44 @@ relayRoutes.post("/accept-invoice", async (c) => {
   if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
 
   const address = requireAddress("INVOICE_REGISTRY_ADDRESS", env.INVOICE_REGISTRY_ADDRESS);
+  const args = [parsed.data.invoiceId, parsed.data.payer, parsed.data.deadline, parsed.data.signature] as const;
 
-  // Defense in depth: verify the signature ourselves before spending gas, even though the contract
-  // will also reject a bad one. Saves a guaranteed-to-revert relay from ever hitting the mempool.
-  const digest = await publicClient.readContract({
+  const invoice = await publicClient.readContract({
     address,
     abi: invoiceRegistryAbi,
-    functionName: "acceptanceDigest",
-    args: [parsed.data.invoiceId, parsed.data.payer, parsed.data.deadline],
+    functionName: "getInvoice",
+    args: [parsed.data.invoiceId],
   });
-  if (!digest) return c.json({ error: "invoice not found" }, 404);
+  if (invoice.issuer === zeroAddress) return c.json({ error: "invoice not found" }, 404);
 
   try {
-    const hash = await relayerClient.writeContract({
+    // Simulate first so a doomed relay (BadSignature, Expired, BadStatus, WrongPayer) never costs gas and
+    // comes back as the contract's own reason.
+    const { request } = await publicClient.simulateContract({
+      account: relayerClient.account,
       address,
       abi: invoiceRegistryAbi,
       functionName: "acceptInvoiceWithSig",
-      args: [parsed.data.invoiceId, parsed.data.payer, parsed.data.deadline, parsed.data.signature],
-      chain: relayerClient.chain,
+      args,
     });
+    // Mezo testnet's eth_estimateGas under-reports this call (23,180 estimated vs 123,123 used), so the
+    // limit is set explicitly with headroom instead of trusting the estimate.
+    const estimate = await publicClient.estimateContractGas({ ...request, account: relayerClient.account });
+    const gas = estimate * 3n / 2n > RELAY_GAS_FLOOR ? (estimate * 3n) / 2n : RELAY_GAS_FLOOR;
+    const hash = await relayerClient.writeContract({ ...request, gas });
     return c.json({ txHash: hash });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "relay failed";
-    // Common revert reasons surface here: BadSignature, Expired, BadStatus, WrongPayer.
-    return c.json({ error: message }, 400);
+    const revert =
+      err instanceof BaseError ? err.walk((e) => e instanceof ContractFunctionRevertedError) : undefined;
+    if (revert instanceof ContractFunctionRevertedError) {
+      return c.json({ error: revert.data?.errorName ?? "reverted" }, 400);
+    }
+    console.error("[relay] accept-invoice failed", err);
+    return c.json({ error: "relay failed, try again" }, 502);
   }
 });
+
+const RELAY_GAS_FLOOR = 200_000n;
 
 /** Validates a signature client-side would submit against, without spending gas — used by the frontend
  *  to preview whether a signature the wallet just produced will actually be accepted. */

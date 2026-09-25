@@ -5,12 +5,13 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ISplitter} from "../interfaces/ILedger.sol";
 
 /// @title Splitter
 /// @notice Immutable percentage split (minimal-proxy clone). `distribute` pushes each recipient's share;
 ///         if a push fails (e.g. a blocklisted recipient) the share is credited for `claim` instead, so one
 ///         bad recipient can never block the others.
-contract Splitter is Initializable, ReentrancyGuard {
+contract Splitter is Initializable, ReentrancyGuard, ISplitter {
     using SafeERC20 for IERC20;
 
     address[] internal _recipients;

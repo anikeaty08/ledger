@@ -2,7 +2,9 @@
 
 import { use, useState } from "react";
 import { useAccount, usePublicClient, useReadContract, useWriteContract } from "wagmi";
-import { LedgerSheet, LedgerSheetHeader, LedgerRow, Button, Input, Label } from "@/components/Ledger";
+import { notFound } from "next/navigation";
+import { zeroAddress } from "viem";
+import { LedgerSheet, LedgerSheetHeader, LedgerRow, Button, Input, Label, Notice, SkeletonRows } from "@/components/Ledger";
 import { Amount } from "@/components/Amount";
 import { StatusBadge } from "@/components/StatusBadge";
 import { NotDeployed } from "@/components/NotDeployed";
@@ -15,7 +17,8 @@ import { formatBps, formatDate, formatUnits18, parseUnits18, InvoiceStatus } fro
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const invoiceId = BigInt(id);
+  const validId = /^\d+$/.test(id);
+  const invoiceId = validId ? BigInt(id) : 0n;
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
@@ -24,7 +27,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const [status, setStatus] = useState<"idle" | "working">("idle");
   const [error, setError] = useState<string | null>(null);
 
-  const deployed = !!addresses.invoiceRegistry && !!addresses.advanceEngine;
+  const deployed = validId && !!addresses.invoiceRegistry && !!addresses.advanceEngine;
 
   const { data: invoice } = useReadContract({
     address: addresses.invoiceRegistry,
@@ -50,6 +53,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
     query: { enabled: deployed },
   });
 
+  if (!validId) notFound();
+
   if (!deployed) {
     return (
       <div className="mx-auto max-w-2xl px-6 py-16">
@@ -59,8 +64,15 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   }
 
   if (!invoice) {
-    return <div className="mx-auto max-w-2xl px-6 py-16 text-ink-soft">Loading invoice…</div>;
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-16">
+        <h1 className="mb-6 text-2xl font-semibold text-ink">Invoice #{id}</h1>
+        <SkeletonRows rows={3} />
+      </div>
+    );
   }
+
+  if (invoice.issuer === zeroAddress) notFound();
 
   const isOwner = address?.toLowerCase() === invoice.issuer.toLowerCase();
   const canAdvance = isOwner && invoice.status === InvoiceStatus.Accepted && quote?.eligible;
@@ -178,10 +190,12 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               at {formatBps(quote.feePer30dBps)} per 30 days
               {quote.recourseBps > 0 ? `, with ${formatBps(quote.recourseBps)} recourse collateral` : ""}.
             </p>
-            <Label>Amount to advance</Label>
+            <Label htmlFor="advance-amount">Amount to advance (MUSD)</Label>
             <Input
+              id="advance-amount"
               value={advanceAmount}
-              onChange={(e) => setAdvanceAmount(e.target.value)}
+              aria-invalid={requested > quote.maxAdvance}
+              onChange={(e) => setAdvanceAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
               placeholder="1,600.00"
               inputMode="decimal"
             />
@@ -190,10 +204,25 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 Estimated fee: <span className="tabular text-ink">{formatUnits18(projectedFee)} MUSD</span>
               </p>
             )}
-            {error && <p className="mt-3 border border-red/30 bg-red-soft px-4 py-3 text-sm text-red">{error}</p>}
-            <Button variant="primary" className="mt-4" onClick={handleAdvance} disabled={status === "working" || requested === 0n}>
-              {status === "working" ? "Processing…" : "Get advance"}
+            {requested > quote.maxAdvance && (
+              <p className="mt-2 text-[13px] text-red">
+                That&apos;s more than the {formatUnits18(quote.maxAdvance)} MUSD available on this invoice.
+              </p>
+            )}
+            {error && <Notice className="mt-3">{error}</Notice>}
+            <Button
+              variant="primary"
+              className="mt-4"
+              onClick={handleAdvance}
+              disabled={status === "working" || requested === 0n || requested > quote.maxAdvance}
+            >
+              {status === "working" ? "Confirm each step in your wallet…" : "Get advance"}
             </Button>
+            {status === "working" && (
+              <p role="status" className="mt-2 text-[13px] text-ink-soft">
+                This takes up to three wallet confirmations: collateral approval, the invoice NFT, then the advance.
+              </p>
+            )}
           </div>
         </LedgerSheet>
       )}

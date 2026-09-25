@@ -7,14 +7,15 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {ReceivableNFT} from "./ReceivableNFT.sol";
+import {ReceivableNFT, IRegistryView} from "./ReceivableNFT.sol";
 import {Invoice, InvoiceStatus, LedgerMath} from "../libraries/Types.sol";
+import {IInvoiceRegistry} from "../interfaces/ILedger.sol";
 
 /// @title InvoiceRegistry
 /// @notice Source of truth for invoice commitments and their lifecycle.
 ///         Terms (line items, names, emails) are encrypted off-chain; only a commitment hash lives here.
 ///         Client acceptance (EIP-712, gasless via relayer, EIP-1271 compatible) mints a ReceivableNFT.
-contract InvoiceRegistry is Ownable2Step, EIP712 {
+contract InvoiceRegistry is Ownable2Step, EIP712, IInvoiceRegistry, IRegistryView {
     using LedgerMath for uint256;
 
     bytes32 public constant ACCEPTANCE_TYPEHASH = keccak256(

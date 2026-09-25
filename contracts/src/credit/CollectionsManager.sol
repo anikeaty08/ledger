@@ -20,7 +20,7 @@ contract CollectionsManager is Ownable2Step {
     address public resolver;
     uint64 public gracePeriod = 15 days;
 
-    event ResolverSet(address resolver);
+    event ResolverSet(address indexed resolver);
     event GracePeriodSet(uint64 grace);
     event Defaulted(uint256 indexed invoiceId, address indexed payer, uint256 owed);
     event DisputeResolved(uint256 indexed invoiceId, bool payerAtFault);

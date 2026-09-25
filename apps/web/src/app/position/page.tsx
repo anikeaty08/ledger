@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useAccount, useReadContract, useWriteContract, usePublicClient } from "wagmi";
 import { zeroAddress } from "viem";
-import { LedgerSheet, LedgerSheetHeader, LedgerRow, Button } from "@/components/Ledger";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { LedgerSheet, LedgerSheetHeader, LedgerRow, Button, Gate, Notice } from "@/components/Ledger";
 import { Amount } from "@/components/Amount";
 import { NotDeployed } from "@/components/NotDeployed";
 import { addresses, requireAddress } from "@/lib/addresses";
@@ -39,7 +40,7 @@ export default function PositionPage() {
     ? { coll: positionRaw[0], debt: positionRaw[1], icr: positionRaw[2], active: positionRaw[3] }
     : undefined;
 
-  const { data: guardianRaw } = useReadContract({
+  const { data: guardianRaw, refetch: refetchGuardian } = useReadContract({
     address: accountAddress,
     abi: ledgerAccountAbi,
     functionName: "guardian",
@@ -99,6 +100,7 @@ export default function PositionPage() {
         ],
       });
       await publicClient!.waitForTransactionReceipt({ hash });
+      await refetchGuardian();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't update the guardian.");
     } finally {
@@ -108,9 +110,9 @@ export default function PositionPage() {
 
   if (!isConnected) {
     return (
-      <div className="mx-auto max-w-2xl px-6 py-16">
-        <p className="text-ink-soft">Connect a wallet to see your BTC position.</p>
-      </div>
+      <Gate title="Your position" body="Connect a wallet to see the BTC you've kept as collateral and your MUSD debt against it.">
+        <ConnectButton />
+      </Gate>
     );
   }
 
@@ -130,7 +132,7 @@ export default function PositionPage() {
         BTC you keep instead of selling, held as collateral in your own MUSD position on Mezo.
       </p>
 
-      {error && <p className="mt-4 border border-red/30 bg-red-soft px-4 py-3 text-sm text-red">{error}</p>}
+      {error && <Notice className="mt-4">{error}</Notice>}
 
       {!hasAccount ? (
         <LedgerSheet className="mt-6">
@@ -177,15 +179,19 @@ export default function PositionPage() {
               </LedgerSheetHeader>
               <div className="p-5">
                 <p className="mb-4 text-sm text-ink-soft">
-                  When enabled, a permissionless keeper can repay debt or add collateral on your behalf if your
-                  ratio drops — it can only reduce risk, never borrow or withdraw.
+                  When it&apos;s on, a public keeper can repay debt or add collateral for you if your ratio drops.
+                  It can only reduce risk. It can never borrow or withdraw.
+                </p>
+                <p className="mb-4 text-sm">
+                  <span className="text-ink-soft">Status: </span>
+                  <span className="font-medium text-ink">{guardian.enabled ? "On" : "Off"}</span>
                 </p>
                 <Button
                   variant={guardian.enabled ? "secondary" : "primary"}
                   onClick={() => handleToggleGuardian(!guardian.enabled)}
                   disabled={working}
                 >
-                  {guardian.enabled ? "Disable guardian" : "Enable guardian"}
+                  {working ? "Confirm in your wallet…" : guardian.enabled ? "Turn off guardian" : "Turn on guardian"}
                 </Button>
               </div>
             </LedgerSheet>
