@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import { waitForReceipt, withGas } from "@/lib/tx";
 import { useAccount, usePublicClient, useReadContract, useWriteContract } from "wagmi";
 import { notFound } from "next/navigation";
 import { zeroAddress } from "viem";
@@ -99,13 +100,15 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           args: [address!, requireAddress("advanceEngine")],
         });
         if (allowance < recourse) {
-          const approveHash = await writeContractAsync({
-            address: musd,
-            abi: erc20Abi,
-            functionName: "approve",
-            args: [requireAddress("advanceEngine"), recourse],
-          });
-          await publicClient!.waitForTransactionReceipt({ hash: approveHash });
+          const approveHash = await writeContractAsync(
+            await withGas(publicClient!, address!, {
+              address: musd,
+              abi: erc20Abi,
+              functionName: "approve",
+              args: [requireAddress("advanceEngine"), recourse],
+            }),
+          );
+          await waitForReceipt(publicClient!, approveHash);
         }
       }
 
@@ -114,21 +117,25 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         abi: invoiceRegistryAbi,
         functionName: "receivableNFT",
       });
-      const approveNftHash = await writeContractAsync({
-        address: nftAddress,
-        abi: receivableNFTApproveAbi,
-        functionName: "approve",
-        args: [requireAddress("advanceEngine"), invoiceId],
-      });
-      await publicClient!.waitForTransactionReceipt({ hash: approveNftHash });
+      const approveNftHash = await writeContractAsync(
+        await withGas(publicClient!, address!, {
+          address: nftAddress,
+          abi: receivableNFTApproveAbi,
+          functionName: "approve",
+          args: [requireAddress("advanceEngine"), invoiceId],
+        }),
+      );
+      await waitForReceipt(publicClient!, approveNftHash);
 
-      const hash = await writeContractAsync({
-        address: requireAddress("advanceEngine"),
-        abi: advanceEngineAbi,
-        functionName: "requestAdvance",
-        args: [invoiceId, requested, maxFee, recourse],
-      });
-      await publicClient!.waitForTransactionReceipt({ hash });
+      const hash = await writeContractAsync(
+        await withGas(publicClient!, address!, {
+          address: requireAddress("advanceEngine"),
+          abi: advanceEngineAbi,
+          functionName: "requestAdvance",
+          args: [invoiceId, requested, maxFee, recourse],
+        }),
+      );
+      await waitForReceipt(publicClient!, hash);
       await refetchQuote();
       setStatus("idle");
     } catch (err) {

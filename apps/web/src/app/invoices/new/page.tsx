@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { waitForReceipt, withGas } from "@/lib/tx";
 import { useAccount, usePublicClient, useWriteContract } from "wagmi";
 import { decodeEventLog, isAddress, zeroAddress } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -16,7 +17,7 @@ import { parseUnits18 } from "@/lib/format";
 
 export default function NewInvoicePage() {
   const router = useRouter();
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
   const { ensureSession } = useSession();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
@@ -73,15 +74,17 @@ export default function NewInvoicePage() {
       const payer = clientAddress && isAddress(clientAddress) ? (clientAddress as `0x${string}`) : zeroAddress;
 
       setStatus("signing");
-      const hash = await writeContractAsync({
-        address: requireAddress("invoiceRegistry"),
-        abi: invoiceRegistryAbi,
-        functionName: "createInvoice",
-        args: [payer, encrypted.commitment, amountWei, dueDateUnix],
-      });
+      const hash = await writeContractAsync(
+        await withGas(publicClient!, address!, {
+          address: requireAddress("invoiceRegistry"),
+          abi: invoiceRegistryAbi,
+          functionName: "createInvoice",
+          args: [payer, encrypted.commitment, amountWei, dueDateUnix],
+        }),
+      );
 
       setStatus("confirming");
-      const receipt = await publicClient!.waitForTransactionReceipt({ hash });
+      const receipt = await waitForReceipt(publicClient!, hash);
       const createdLog = receipt.logs
         .map((log) => {
           try {

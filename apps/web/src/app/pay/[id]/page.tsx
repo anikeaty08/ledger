@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { waitForReceipt, withGas } from "@/lib/tx";
 import { useAccount, usePublicClient, useReadContract, useWriteContract, useSignTypedData } from "wagmi";
 import { parseAbi } from "viem";
 import { notFound } from "next/navigation";
@@ -174,21 +175,25 @@ export default function PayPage({ params }: { params: Promise<{ id: string }> })
         args: [address, requireAddress("settlementRouter")],
       });
       if (allowance < owed) {
-        const approveHash = await writeContractAsync({
-          address: musd,
-          abi: erc20ApproveAbi,
-          functionName: "approve",
-          args: [requireAddress("settlementRouter"), owed],
-        });
-        await publicClient!.waitForTransactionReceipt({ hash: approveHash });
+        const approveHash = await writeContractAsync(
+          await withGas(publicClient!, address, {
+            address: musd,
+            abi: erc20ApproveAbi,
+            functionName: "approve",
+            args: [requireAddress("settlementRouter"), owed],
+          }),
+        );
+        await waitForReceipt(publicClient!, approveHash);
       }
-      const payHash = await writeContractAsync({
-        address: requireAddress("settlementRouter"),
-        abi: settlementRouterAbi,
-        functionName: "pay",
-        args: [invoiceId, owed],
-      });
-      await publicClient!.waitForTransactionReceipt({ hash: payHash });
+      const payHash = await writeContractAsync(
+        await withGas(publicClient!, address, {
+          address: requireAddress("settlementRouter"),
+          abi: settlementRouterAbi,
+          functionName: "pay",
+          args: [invoiceId, owed],
+        }),
+      );
+      await waitForReceipt(publicClient!, payHash);
       await Promise.all([refetchInvoice(), refetchOwed()]);
       setActionState("done");
     } catch (err) {

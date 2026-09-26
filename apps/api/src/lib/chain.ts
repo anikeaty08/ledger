@@ -1,4 +1,4 @@
-import { createPublicClient, createWalletClient, http, type Address } from "viem";
+import { createPublicClient, createWalletClient, http, nonceManager, type Address } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { env } from "./env.js";
 
@@ -21,7 +21,11 @@ export const publicClient = createPublicClient({
  * (client invoice acceptance, `*WithSignature` position ops). It pays gas only — it never holds user
  * funds and cannot construct a payload the user did not sign.
  */
-export const relayerAccount = env.RELAYER_PRIVATE_KEY ? privateKeyToAccount(env.RELAYER_PRIVATE_KEY) : undefined;
+// nonceManager hands out nonces locally, so concurrent relays never reuse one and a lagging RPC node's
+// stale transaction count can't make the next relay collide with the last.
+export const relayerAccount = env.RELAYER_PRIVATE_KEY
+  ? privateKeyToAccount(env.RELAYER_PRIVATE_KEY, { nonceManager })
+  : undefined;
 
 export const relayerClient = relayerAccount
   ? createWalletClient({ account: relayerAccount, chain: mezoTestnet, transport: http(env.RPC_URL) })

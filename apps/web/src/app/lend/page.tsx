@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { waitForReceipt, withGas } from "@/lib/tx";
 import { useAccount, useReadContract, useWriteContract, usePublicClient } from "wagmi";
 import { LedgerSheet, LedgerSheetHeader, LedgerRow, Button, Input, Label, Notice } from "@/components/Ledger";
 import { NotDeployed } from "@/components/NotDeployed";
@@ -52,21 +53,25 @@ function TrancheCard({
         args: [address, vault],
       });
       if (allowance < assets) {
-        const approveHash = await writeContractAsync({
-          address: musd,
-          abi: trancheVaultAbi,
-          functionName: "approve",
-          args: [vault, assets],
-        });
-        await publicClient!.waitForTransactionReceipt({ hash: approveHash });
+        const approveHash = await writeContractAsync(
+          await withGas(publicClient!, address, {
+            address: musd,
+            abi: trancheVaultAbi,
+            functionName: "approve",
+            args: [vault, assets],
+          }),
+        );
+        await waitForReceipt(publicClient!, approveHash);
       }
-      const hash = await writeContractAsync({
-        address: vault,
-        abi: trancheVaultAbi,
-        functionName: "deposit",
-        args: [assets, address],
-      });
-      await publicClient!.waitForTransactionReceipt({ hash });
+      const hash = await writeContractAsync(
+        await withGas(publicClient!, address, {
+          address: vault,
+          abi: trancheVaultAbi,
+          functionName: "deposit",
+          args: [assets, address],
+        }),
+      );
+      await waitForReceipt(publicClient!, hash);
       await refetchBalance();
       setAmount("");
     } catch (err) {

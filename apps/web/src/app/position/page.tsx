@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { waitForReceipt, withGas } from "@/lib/tx";
 import { useAccount, useReadContract, useWriteContract, usePublicClient } from "wagmi";
 import { zeroAddress } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -64,12 +65,14 @@ export default function PositionPage() {
     setWorking(true);
     setError(null);
     try {
-      const hash = await writeContractAsync({
-        address: requireAddress("ledgerAccountFactory"),
-        abi: ledgerAccountFactoryAbi,
-        functionName: "createAccount",
-      });
-      await publicClient!.waitForTransactionReceipt({ hash });
+      const hash = await writeContractAsync(
+        await withGas(publicClient!, address!, {
+          address: requireAddress("ledgerAccountFactory"),
+          abi: ledgerAccountFactoryAbi,
+          functionName: "createAccount",
+        }),
+      );
+      await waitForReceipt(publicClient!, hash);
       await refetchAccount();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't create your account.");
@@ -83,23 +86,25 @@ export default function PositionPage() {
     setWorking(true);
     setError(null);
     try {
-      const hash = await writeContractAsync({
-        address: accountAddress!,
-        abi: ledgerAccountAbi,
-        functionName: "configureGuardian",
-        args: [
-          {
-            enabled,
-            warnICRBps: guardian.warnICRBps,
-            actionICRBps: guardian.actionICRBps,
-            targetICRBps: guardian.targetICRBps,
-            criticalICRBps: guardian.criticalICRBps,
-            maxDailyRepay: guardian.maxDailyRepay,
-            maxDailyBTC: guardian.maxDailyBTC,
-          },
-        ],
-      });
-      await publicClient!.waitForTransactionReceipt({ hash });
+      const hash = await writeContractAsync(
+        await withGas(publicClient!, address!, {
+          address: accountAddress!,
+          abi: ledgerAccountAbi,
+          functionName: "configureGuardian",
+          args: [
+            {
+              enabled,
+              warnICRBps: guardian.warnICRBps,
+              actionICRBps: guardian.actionICRBps,
+              targetICRBps: guardian.targetICRBps,
+              criticalICRBps: guardian.criticalICRBps,
+              maxDailyRepay: guardian.maxDailyRepay,
+              maxDailyBTC: guardian.maxDailyBTC,
+            },
+          ],
+        }),
+      );
+      await waitForReceipt(publicClient!, hash);
       await refetchGuardian();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't update the guardian.");

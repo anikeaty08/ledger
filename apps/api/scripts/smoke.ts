@@ -15,12 +15,14 @@ import {
   hashTypedData,
   http,
   keccak256,
+  nonceManager,
   parseAbi,
   toHex,
   zeroAddress,
   type Hex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { sendTx, waitForReceipt } from "./tx.js";
 
 const API = process.env.API_URL ?? "http://localhost:8787";
 const ORIGIN = process.env.WEB_ORIGIN ?? "http://localhost:3000";
@@ -28,8 +30,8 @@ const RPC = process.env.RPC_URL ?? "https://rpc.test.mezo.org";
 const REGISTRY = process.env.INVOICE_REGISTRY_ADDRESS as Hex;
 const CHAIN_ID = Number(process.env.CHAIN_ID ?? 31611);
 
-const issuer = privateKeyToAccount(process.env.ISSUER_KEY as Hex);
-const payer = privateKeyToAccount(process.env.PAYER_KEY as Hex);
+const issuer = privateKeyToAccount(process.env.ISSUER_KEY as Hex, { nonceManager });
+const payer = privateKeyToAccount(process.env.PAYER_KEY as Hex, { nonceManager });
 const chain = {
   id: CHAIN_ID,
   name: "Mezo Testnet",
@@ -167,13 +169,13 @@ async function main() {
   const enc = await encryptTerms(terms);
   const amount = 2_000n * 10n ** 18n;
   const dueDate = BigInt(Math.floor(Date.now() / 1000) + 30 * 86_400);
-  const hash = await issuerWallet.writeContract({
+  const receipt = await sendTx(pub as never, issuerWallet as never, {
     address: REGISTRY,
     abi: registryAbi,
     functionName: "createInvoice",
     args: [zeroAddress, enc.commitment, amount, dueDate],
   });
-  const receipt = await pub.waitForTransactionReceipt({ hash });
+  const hash = receipt.transactionHash;
   const created = receipt.logs
     .map((l) => {
       try {
@@ -297,7 +299,7 @@ async function main() {
   });
   let acceptedOnChain = false;
   if (accept.json?.txHash) {
-    const r = await pub.waitForTransactionReceipt({ hash: accept.json.txHash });
+    const r = await waitForReceipt(pub as never, accept.json.txHash);
     const after = await call("GET", `/api/v1/chain/invoices/${invoiceId}`);
     acceptedOnChain = r.status === "success" && Number(after.json?.invoice?.status) === 2;
   }

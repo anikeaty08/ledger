@@ -10,6 +10,7 @@
     "test": "vitest run",
     "smoke": "tsx scripts/smoke.ts",
     "payment": "tsx scripts/payment.ts",
+    "advance": "tsx scripts/advance.ts",
     "db:up": "docker compose up -d",
     "lint": "tsc -p tsconfig.json --noEmit"
   },

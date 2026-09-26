@@ -9,7 +9,8 @@
  */
 import "dotenv/config";
 import { webcrypto } from "node:crypto";
-import { createPublicClient, createWalletClient, decodeEventLog, http, keccak256, parseAbi, toHex, zeroAddress, type Hex } from "viem";
+import { createPublicClient, createWalletClient, decodeEventLog, http, keccak256, nonceManager, parseAbi, toHex, zeroAddress, type Hex } from "viem";
+import { sendTx, waitForReceipt } from "./tx.js";
 import { privateKeyToAccount } from "viem/accounts";
 
 const API = process.env.API_URL ?? "http://localhost:8787";
@@ -21,8 +22,8 @@ const ROUTER = process.env.SETTLEMENT_ROUTER_ADDRESS as Hex;
 const REPUTATION = process.env.REPUTATION_REGISTRY_ADDRESS as Hex;
 const MUSD = process.env.MUSD_ADDRESS as Hex;
 
-const issuer = privateKeyToAccount(process.env.ISSUER_KEY as Hex);
-const payer = privateKeyToAccount(process.env.PAYER_KEY as Hex);
+const issuer = privateKeyToAccount(process.env.ISSUER_KEY as Hex, { nonceManager });
+const payer = privateKeyToAccount(process.env.PAYER_KEY as Hex, { nonceManager });
 const chain = { id: CHAIN_ID, name: "Mezo Testnet", nativeCurrency: { name: "Bitcoin", symbol: "BTC", decimals: 18 }, rpcUrls: { default: { http: [RPC] } } } as const;
 const pub = createPublicClient({ chain, transport: http(RPC) });
 const issuerWallet = createWalletClient({ account: issuer, chain, transport: http(RPC) });
@@ -87,11 +88,9 @@ const owedOf = (id: bigint) => pub.readContract({ address: REGISTRY, abi: regist
 async function payLikeTheFrontend(invoiceId: bigint, amount: bigint) {
   const allowance = await pub.readContract({ address: MUSD, abi: erc20Abi, functionName: "allowance", args: [payer.address, ROUTER] });
   if (allowance < amount) {
-    const h = await payerWallet.writeContract({ address: MUSD, abi: erc20Abi, functionName: "approve", args: [ROUTER, amount] });
-    await pub.waitForTransactionReceipt({ hash: h });
+    await sendTx(pub as never, payerWallet as never, { address: MUSD, abi: erc20Abi, functionName: "approve", args: [ROUTER, amount] });
   }
-  const hash = await payerWallet.writeContract({ address: ROUTER, abi: routerAbi, functionName: "pay", args: [invoiceId, amount], gas: 600_000n });
-  return pub.waitForTransactionReceipt({ hash });
+  return sendTx(pub as never, payerWallet as never, { address: ROUTER, abi: routerAbi, functionName: "pay", args: [invoiceId, amount] });
 }
 
 async function main() {
@@ -108,13 +107,14 @@ async function main() {
   const ct = new Uint8Array(await webcrypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode('{"description":"Payment test"}')));
   const commitment = keccak256(toHex(ct));
   const dueDate = BigInt(Math.floor(Date.now() / 1000) + 30 * 86_400);
-  const createHash = await issuerWallet.writeContract({
+  const createReceipt = await sendTx(pub as never, issuerWallet as never, {
     address: REGISTRY,
     abi: registryAbi,
     functionName: "createInvoice",
     args: [zeroAddress, commitment, invoiceAmount, dueDate],
   });
-  const created = (await pub.waitForTransactionReceipt({ hash: createHash })).logs
+  const createHash = createReceipt.transactionHash;
+  const created = createReceipt.logs
     .map((l) => {
       try {
         return decodeEventLog({ abi: registryAbi, ...l });
@@ -152,7 +152,7 @@ async function main() {
   const accept = await call("POST", "/api/v1/relay/accept-invoice", {
     body: { invoiceId: id.toString(), payer: payer.address, deadline: deadline.toString(), signature },
   });
-  if (accept.json?.txHash) await pub.waitForTransactionReceipt({ hash: accept.json.txHash });
+  if (accept.json?.txHash) await waitForReceipt(pub as never, accept.json.txHash);
   const afterAccept = await call("GET", `/api/v1/chain/invoices/${id}`);
   check("client accepts via the relayer (no gas) and the invoice is Accepted", Number(afterAccept.json?.invoice?.status) === STATUS.Accepted, accept.text);
 
